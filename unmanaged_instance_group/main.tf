@@ -1,5 +1,5 @@
-module "multiple-vm" {
-source = "/root/terraform/multiple-vm"
+module "multiple_VM_creation" {
+source = "/root/terraform/multiple_VM_creation"
 }
 
 resource "google_compute_instance_group" "example_unmanaged_group" {
