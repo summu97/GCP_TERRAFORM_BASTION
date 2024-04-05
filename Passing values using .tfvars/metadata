@@ -10,6 +10,11 @@ Tree structure:
 ===========================================
 main.tf(parent)
 
+provider "google" {
+  project = "ringed-hallway-417305"
+  region  = "us-east1-b"
+}
+
 module "networking" {
   source    = "./networking"
 
@@ -63,10 +68,6 @@ networking:
 ===========================================
 main.tf
 
-provider "google" {
-  project = "ringed-hallway-417305"
-  region  = "us-east1-b"
-}
 resource "google_project_service" "dns" {
   project = var.project_id
 
@@ -150,9 +151,12 @@ variable "bastion_network_tags" {}
 variable "private_firewall_name" {}
 variable "private_network_tags" {}
 -------------------------------------------
+RUN:
 
 terraform init
 
 terraform plan -var-file=/path/to/sumo.tfvars
 
 terraform apply -var-file=/path/to/sumo.tfvars
+-------------------------------------------
+
