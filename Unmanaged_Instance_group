@@ -195,7 +195,9 @@ variable "forwarding_rule_name" {
 type = string
 default = "um-forwarding-rule"
 }
-
+------------------------------------------------
+What happens in multiple_vm:
+* Creates five VM-instances and Output's the self_link of each VM-instances.
 What happens in unmanaged_group:
 1. Creates instance group.
 2. Creates Health check.
