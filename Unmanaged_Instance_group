@@ -209,3 +209,9 @@ What happens in unmanaged_group:
 	The HTTP proxy acts as an intermediary between clients and servers, forwarding HTTP requests from clients to servers and then returning the servers' responses back to the clients.
 6. Creates forwarding rule.
 	Forwarding rule specifies that any incoming traffic received on port 80 should be directed to the HTTP target proxy.
+
+
+Client----------->Global Forwarding rule------->HTTP proxy---------->URL mapping to---------->Backend service----------->End Eervers
+
+
+
