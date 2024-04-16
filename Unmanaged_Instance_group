@@ -110,6 +110,7 @@ resource "google_compute_instance_group" "example_unmanaged_group" {
 }
 
 # Define a health check for the load balancer
+# It creates an HTTP health check in GCP that checks the health of a target every 10 seconds by sending an HTTP request to the root ("/") of the specified target URL and waits for a response within 5 seconds.
 resource "google_compute_http_health_check" "example_health_check" {
   name               = var.health_check_name
   check_interval_sec = 10
@@ -182,7 +183,7 @@ default = "HTTP"
 
 variable "url_map" {
 type = string
-default = "um-url-map"
+default = "um-loadbalancer"
 }
 
 variable "proxy_name" {
@@ -194,3 +195,15 @@ variable "forwarding_rule_name" {
 type = string
 default = "um-forwarding-rule"
 }
+
+What happens in unmanaged_group:
+1. Creates instance group.
+2. Creates Health check.
+3. Creates Backend service.
+	The backend service makes sure your servers are healthy and evenly distributes incoming requests among them.
+4. URL mapping: maps backend to url you provided.
+	Google designed the architecture of Google Cloud Platform (GCP) load balancers to use a URL map as an intermediary 	between the Target HTTP Proxy and the backend services for flexibility and scalability reasons.
+5.Creates Target HTTP proxy.
+	The HTTP proxy acts as an intermediary between clients and servers, forwarding HTTP requests from clients to servers and then returning the servers' responses back to the clients.
+6. Creates forwarding rule.
+	Forwarding rule specifies that any incoming traffic received on port 80 should be directed to the HTTP target proxy.
