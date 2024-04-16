@@ -1,0 +1,137 @@
+├── custom_role
+│   ├── main.tf
+│   └── variable.tf
+├── main.tf
+├── service_account
+│   ├── main.tf
+│   └── variable.tf
+└── storage_bucket
+    └── main.tf
+
+main.tf:
+provider "google" {
+  project     = "ringed-hallway-417305"
+  region      = "us-east1-b"
+}
+
+
+module "storage_bucket" {
+source = "./storage_bucket"
+}
+-------------------------------------------------
+custom_role(folder):
+-->main.tf:
+resource "google_project_iam_custom_role" "storage_custom_role" {
+  role_id     = var.role_id
+  project     = var.project
+  title       = var.title
+  description = var.description
+
+  permissions = [
+    "storage.buckets.create",
+    "storage.buckets.get",
+    "storage.buckets.list",
+  ]
+}
+
+output "custom_role_id" {
+  value = google_project_iam_custom_role.storage_custom_role.name
+}
+
+-->variable.tf
+
+variable "role_id" {
+type = string
+default = "storage.custom.role_v1"
+}
+
+variable "project" {
+type = string
+default = "ringed-hallway-417305"
+}
+
+variable "title" {
+type = string
+default = "Custom Role for Bucket Management"
+}
+
+variable "description" {
+type = string
+default = "Custom role with permissions to create and view Cloud Storage buckets"
+}
+------------------------------------------------- 
+service_account(folder):
+-->main.tf
+resource "google_service_account" "example_service_account" {
+  account_id   = var.svc_id
+  display_name = var.svc_id
+  project      = var.project_id
+}
+
+output "service_email" {
+  value = google_service_account.example_service_account.email
+}
+
+-->variable.tf
+variable "project_id" {
+description = "for custom role"
+type = string
+default = "ringed-hallway-417305"
+}
+
+variable "svc_id" {
+description = "fdfds"
+type = string
+default = "tfm-svc"
+}
+-------
+output: projects/ringed-hallway-417305/roles/storage.custom.role
+
+------------------------------------------------- 
+storage_bucket(folder):
+-->main.tf:
+module "service_account" {
+source = "/root/Role_Storage/service_account"
+}
+
+module "custom_role" {
+source = "/root/Role_Storage/custom_role"
+}
+
+resource "google_storage_bucket" "my_bucket" {
+  count            = 3
+  name             = "adq-bucket-${count.index + 1}"
+  location         = "US"  # Change this to your desired location
+  force_destroy    = true  # Be cautious with this setting, as it will permanently delete all objects in the bucket when the resource is destroyed
+
+  # Enable versioning for the bucket
+  versioning {
+    enabled = true
+  }
+
+  # Optional: Add lifecycle rules for automatic object deletion
+  lifecycle_rule {
+    condition {
+      age = 30
+    }
+
+    action {
+      type = "Delete"
+    }
+  }
+
+  storage_class = "NEARLINE"  # Specify the desired storage class (e.g., STANDARD, NEARLINE, COLDLINE, ARCHIVE)
+}
+
+resource "google_storage_bucket_iam_binding" "custom_role_binding" {
+  count  = length(google_storage_bucket.my_bucket)
+  bucket = google_storage_bucket.my_bucket[count.index].name
+  role   = module.custom_role.custom_role_id
+
+  members = [
+    "serviceAccount:${module.service_account.service_email}",
+  ]
+
+}
+
+NOTE: when you are calling variable for service account make sure to put in curly braces "{}"
