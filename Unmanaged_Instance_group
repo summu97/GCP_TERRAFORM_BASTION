@@ -1,0 +1,196 @@
+Unmanaged_Instance_group(folder):
+├── main.tf
+├── multiple_vm
+│   ├── main.tf
+│   └── variable.tf
+└── unmanaged_group
+    ├── main.tf
+    └── variable.tf
+
+-->main.tf
+provider "google" {
+  project     = "ringed-hallway-417305"
+  region      = "us-east1-b"
+}
+
+
+module "unmanaged_group" {
+source = "./unmanaged_group"
+}
+------------------
+multiple_vm:(default service account and networking)(folder):
+-->main.tf:
+
+resource "google_compute_instance" "vm" {
+  count        = 5
+  name         = "vm-server-${count.index + 1}"
+  machine_type = var.machine_type
+  zone         = var.zone
+
+  boot_disk {
+    initialize_params {
+      image = var.image
+      labels = {
+        my_label = "value"
+      }
+    }
+  }
+
+  // Local SSD disk
+  scratch_disk {
+    interface = "NVME"
+  }
+
+  network_interface {
+    network = "default" 
+    subnetwork = "default" 
+
+    access_config {
+      // Ephemeral IP
+    }
+  }
+
+  tags = ["vm-server-${count.index + 1}"]  # Add network tags
+
+}
+
+output "vm1_self_link" {
+  value = google_compute_instance.vm[0].self_link
+}
+
+output "vm2_self_link" {
+  value = google_compute_instance.vm[1].self_link
+}
+
+output "vm3_self_link" {
+  value = google_compute_instance.vm[2].self_link
+}
+
+output "vm4_self_link" {
+  value = google_compute_instance.vm[3].self_link
+}
+
+output "vm5_self_link" {
+  value = google_compute_instance.vm[4].self_link
+}
+
+-->variable.tf:
+variable "machine_type" {
+type = string
+default = "n2-standard-2"
+}
+
+variable "zone" {
+type = string
+default = "us-central1-a"
+}
+
+variable "image" {
+type = string
+default = "debian-cloud/debian-11"
+}
+-----------------------------------------------------
+unmanaged_group(folder):
+-->main.tf:
+module "multiple_vm" {
+source = "/root/Unmanaged_Instance_group/multiple_vm"
+}
+
+# Define the unmanaged instance group
+resource "google_compute_instance_group" "example_unmanaged_group" {
+  name = var.group_name
+  zone = var.zone
+  instances = [
+    module.multiple_vm.vm1_self_link,
+    module.multiple_vm.vm2_self_link,
+    module.multiple_vm.vm3_self_link,
+    module.multiple_vm.vm4_self_link,
+    module.multiple_vm.vm5_self_link,
+  ]
+}
+
+# Define a health check for the load balancer
+resource "google_compute_http_health_check" "example_health_check" {
+  name               = var.health_check_name
+  check_interval_sec = 10
+  timeout_sec        = 5
+  request_path       = "/"
+}
+
+# Define a backend service for the load balancer
+resource "google_compute_backend_service" "example_backend_service" {
+  name                  = var.backend_name
+  port_name             = var.port_name
+  protocol              = var.protocol
+  timeout_sec           = 10
+  health_checks         = [google_compute_http_health_check.example_health_check.self_link]
+  backend {
+    group = google_compute_instance_group.example_unmanaged_group.self_link
+  }
+}
+
+# Define a URL map for the load balancer
+resource "google_compute_url_map" "example_url_map" {
+  name            = var.url_map
+  default_service = google_compute_backend_service.example_backend_service.self_link
+}
+
+# Define a target HTTP proxy for the load balancer
+resource "google_compute_target_http_proxy" "example_target_http_proxy" {
+  name    = var.proxy_name
+  url_map = google_compute_url_map.example_url_map.self_link
+}
+
+# Define a global forwarding rule for the load balancer
+resource "google_compute_global_forwarding_rule" "example_forwarding_rule" {
+  name       = var.forwarding_rule_name
+  target     = google_compute_target_http_proxy.example_target_http_proxy.self_link
+  port_range = "80"
+}
+
+-->variable.tf:
+
+variable "group_name" {
+type = string
+default = "unmanaged-group-1"
+}
+
+variable "zone" {
+type = string
+default = "us-central1-a"
+}
+
+variable "health_check_name" {
+type = string
+default = "um-health-check"
+}
+
+variable "backend_name" {
+type = string
+default = "um-backend-service"
+}
+
+variable "port_name" {
+type = string
+default = "http"
+}
+
+variable "protocol" {
+type = string
+default = "HTTP"
+}
+
+variable "url_map" {
+type = string
+default = "um-url-map"
+}
+
+variable "proxy_name" {
+type = string
+default = "um-target-http-proxy"
+}
+
+variable "forwarding_rule_name" {
+type = string
+default = "um-forwarding-rule"
+}
