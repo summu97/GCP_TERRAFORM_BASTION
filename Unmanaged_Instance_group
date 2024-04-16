@@ -105,6 +105,7 @@ resource "google_compute_instance_group" "example_unmanaged_group" {
     module.multiple_vm.vm2_self_link,
     module.multiple_vm.vm3_self_link,
     module.multiple_vm.vm4_self_link,
+    module.multiple_vm.vm5_self_link,
   ]
   named_port {
     name = "http"
