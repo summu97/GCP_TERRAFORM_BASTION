@@ -93,7 +93,7 @@ default = "debian-cloud/debian-11"
 unmanaged_group(folder):
 -->main.tf:
 module "multiple_vm" {
-source = "/root/Unmanaged_Instance_group/multiple_vm"
+source = "/root/unmanaged/multiple_vm"
 }
 
 # Define the unmanaged instance group
@@ -105,12 +105,14 @@ resource "google_compute_instance_group" "example_unmanaged_group" {
     module.multiple_vm.vm2_self_link,
     module.multiple_vm.vm3_self_link,
     module.multiple_vm.vm4_self_link,
-    module.multiple_vm.vm5_self_link,
   ]
+  named_port {
+    name = "http"
+    port = 80
+  }
 }
 
 # Define a health check for the load balancer
-# It creates an HTTP health check in GCP that checks the health of a target every 10 seconds by sending an HTTP request to the root ("/") of the specified target URL and waits for a response within 5 seconds.
 resource "google_compute_http_health_check" "example_health_check" {
   name               = var.health_check_name
   check_interval_sec = 10
@@ -120,11 +122,11 @@ resource "google_compute_http_health_check" "example_health_check" {
 
 # Define a backend service for the load balancer
 resource "google_compute_backend_service" "example_backend_service" {
-  name                  = var.backend_name
-  port_name             = var.port_name
-  protocol              = var.protocol
-  timeout_sec           = 10
-  health_checks         = [google_compute_http_health_check.example_health_check.self_link]
+  name                = var.backend_name
+  port_name           = var.port_name
+  protocol            = var.protocol
+  timeout_sec         = 10
+  health_checks       = [google_compute_http_health_check.example_health_check.self_link]
   backend {
     group = google_compute_instance_group.example_unmanaged_group.self_link
   }
@@ -148,7 +150,6 @@ resource "google_compute_global_forwarding_rule" "example_forwarding_rule" {
   target     = google_compute_target_http_proxy.example_target_http_proxy.self_link
   port_range = "80"
 }
-
 -->variable.tf:
 
 variable "group_name" {
