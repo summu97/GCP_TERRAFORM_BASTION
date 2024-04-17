@@ -212,6 +212,7 @@ What happens in unmanaged_group:
 6. Creates forwarding rule.
 	Forwarding rule specifies that any incoming traffic received on port 80 should be directed to the HTTP target proxy.
 
+NOTE:you're using an unmanaged instance group, so health checking won't be automatically applied to instances. You need to handle health checking in your instances yourself.
 
 Client----------->Global Forwarding rule------->HTTP proxy---------->URL mapping to---------->Backend service----------->End Eervers
 
