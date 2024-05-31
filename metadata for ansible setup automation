@@ -1,0 +1,39 @@
+For slave:
+metadata_startup_script = <<-SCRIPT
+    #!/bin/bash
+    sudo apt-get update
+    sudo apt-get install -y openssh-server
+    sudo hostnamectl set-hostname worker
+    echo 'root:${var.slave_password}' | sudo chpasswd
+    sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+    sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    # Modify /etc/ssh/sshd_configcd t
+    sudo sed -i '39s/^#//' /etc/ssh/sshd_config
+    sudo sed -i '42s/^#//' /etc/ssh/sshd_config
+    sudo systemctl restart sshd
+    SCRIPT
+
+For master:
+metadata_startup_script = <<-SCRIPT
+    #!/bin/bash
+sudo apt-get update
+sudo apt-get install -y openssh-server ansible
+sudo hostnamectl set-hostname master
+echo 'root:${var.master_password}' | sudo chpasswd
+sudo sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
+sudo systemctl restart sshd
+# Modify /etc/ansible/ansible.cfg
+sudo sed -i '14s/^#//' /etc/ansible/ansible.cfg
+sudo sed -i '22s/^#//' /etc/ansible/ansible.cfg
+ 
+# Add slave instance to Ansible inventory
+echo -e "[dev]\n${google_compute_instance.worker_instance.network_interface.0.network_ip
+}" | sudo tee -a /etc/ansible/hosts
+ 
+# Generate SSH key pair
+ssh-keygen -t rsa -b 2048 -f /root/.ssh/id_rsa -N ""
+ 
+# Copy public key to slave instance
+sshpass -p "${var.master_password}" ssh-copy-id -o StrictHostKeyChecking=no root@${google_compute_instance.worker_instance.network_interface.0.network_ip}
+  SCRIPT
