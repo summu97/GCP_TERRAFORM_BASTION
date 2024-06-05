@@ -1,0 +1,95 @@
+  metadata_startup_script = <<-EOF
+    #!/bin/bash
+    date
+    # Modifying config file
+    useradd -m -d / -s /bin/bash sumanth && \
+        echo 'sumanth:password' | chpasswd
+    echo 'sumanth ALL=(ALL) NOPASSWD: /usr/bin/bash' | sudo tee -a /etc/sudoers
+    sudo sed -i '34s|.*|PermitRootLogin yes|' /etc/ssh/sshd_config
+    sudo sed -i '58s|.*|PasswordAuthentication yes|' /etc/ssh/sshd_config
+    sudo sed -i '42s|.*|AuthorizedKeysFile     .ssh/authorized_keys .ssh/authorized_keys2|' /etc/ssh/sshd_config
+    sudo sed -i '39s|.*|PubkeyAuthentication yes|' /etc/ssh/sshd_config
+    sudo sed -i '15s|.*|Port 22|' /etc/ssh/sshd_config
+
+    # Restart and check status of sshd
+    systemctl restart sshd
+    systemctl status sshd
+  EOF
+-------------------
+  metadata_startup_script = <<-EOF
+  #! /bin/bash
+    sudo apt-get update
+    sudo apt install git -y
+    sudo apt install -y openjdk-17-jre wget vim
+
+    # Install Jenkins
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+    /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+    echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+    https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+    /etc/apt/sources.list.d/jenkins.list > /dev/null
+    sudo apt-get update
+    sudo apt-get install jenkins -y
+    sudo systemctl start jenkins
+    sudo systemctl enable jenkins
+    # Installing docker
+    sudo apt install docker.io -y
+    sudo sed -i '14s|.*|ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock|' /lib/systemd/system/docker.service
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    # Install Ansible
+    sudo apt-get update
+    sudo apt-get install -y software-properties-common
+    sudo add-apt-repository --yes --update ppa:ansible/ansible
+    sudo apt-get install -y ansible
+    sudo hostnamectl set-hostname ansible-master
+    echo 'root:password' | sudo chpasswd
+    # Modifying config file
+    sudo sed -i '34s|.*|PermitRootLogin yes|' /etc/ssh/sshd_config
+    sudo sed -i '58s|.*|PasswordAuthentication yes|' /etc/ssh/sshd_config
+    sudo sed -i '42s|.*|AuthorizedKeysFile     .ssh/authorized_keys .ssh/authorized_keys2|' /etc/ssh/sshd_config
+    sudo sed -i '39s|.*|PubkeyAuthentication yes|' /etc/ssh/sshd_config
+    sudo sed -i '15s|.*|Port 22|' /etc/ssh/sshd_config
+
+    # Restart and check status of sshd
+    systemctl restart sshd
+    systemctl status sshd
+--------------------------------
+  metadata_startup_script = <<-EOF
+  #! /bin/bash
+    sudo apt-get update
+    sudo apt install git -y
+    sudo apt install -y openjdk-17-jre wget vim
+
+    # Install Jenkins
+    curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+    /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+    echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+    https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+    /etc/apt/sources.list.d/jenkins.list > /dev/null
+    sudo apt-get update
+    sudo apt-get install jenkins -y
+    sudo systemctl start jenkins
+    sudo systemctl enable jenkins
+    # Installing docker
+    sudo apt install docker.io -y
+    sudo sed -i '14s|.*|ExecStart=/usr/bin/dockerd -H tcp://0.0.0.0:4243 -H unix:///var/run/docker.sock|' /lib/systemd/system/docker.service
+    sudo systemctl daemon-reload
+    sudo systemctl restart docker
+    # Install Ansible
+    sudo apt-get update
+    sudo apt-get install -y software-properties-common
+    sudo add-apt-repository --yes --update ppa:ansible/ansible
+    sudo apt-get install -y ansible
+    sudo hostnamectl set-hostname ansible-master
+    echo 'root:password' | sudo chpasswd
+    # Modifying config file
+    sudo sed -i '34s|.*|PermitRootLogin yes|' /etc/ssh/sshd_config
+    sudo sed -i '58s|.*|PasswordAuthentication yes|' /etc/ssh/sshd_config
+    sudo sed -i '42s|.*|AuthorizedKeysFile     .ssh/authorized_keys .ssh/authorized_keys2|' /etc/ssh/sshd_config
+    sudo sed -i '39s|.*|PubkeyAuthentication yes|' /etc/ssh/sshd_config
+    sudo sed -i '15s|.*|Port 22|' /etc/ssh/sshd_config
+
+    # Restart and check status of sshd
+    systemctl restart sshd
+    systemctl status sshd
